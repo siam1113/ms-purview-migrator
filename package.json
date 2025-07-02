@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "@types/node": "^24.0.10",
+    "dotenv": "^17.0.1",
+    "playwright": "^1.53.2",
+    "tsc": "^2.0.4",
+    "typescript": "^5.8.3"
+  },
+  "name": "clear",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "scraper": "npm run build && node ./dist/index.js",
+    "setup": "yarn install && yarn playwright install"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
