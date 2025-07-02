@@ -12,6 +12,23 @@ A Python tool for Microsoft Purview data migration with interactive authenticati
 
 ## Installation
 
+### Quick Setup
+
+1. Clone the repository:
+```bash
+git clone https://github.com/siam1113/ms-purview-migrator.git
+cd ms-purview-migrator
+```
+
+2. Run the setup script:
+```bash
+python setup.py
+```
+
+This will automatically install dependencies, configure Playwright, and create your `.env` file.
+
+### Manual Setup
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/siam1113/ms-purview-migrator.git
@@ -68,6 +85,40 @@ To use this tool, you need to register an application in Azure AD:
 6. After creation, copy the "Application (client) ID" to your `.env` file
 
 ## Usage
+
+### Command Line Interface
+
+The simplest way to use the authentication is through the CLI:
+
+```bash
+# Authenticate a user
+python auth_cli.py login user@example.com
+
+# Check authentication status
+python auth_cli.py status user@example.com
+
+# Logout a user
+python auth_cli.py logout user@example.com
+
+# Force new authentication (ignore cache)
+python auth_cli.py login user@example.com --force-new
+
+# Run in headless mode
+python auth_cli.py login user@example.com --headless
+
+# Clear all sessions
+python auth_cli.py clear-all
+```
+
+### Interactive Example
+
+Run the included example script:
+
+```bash
+python example_auth.py
+```
+
+This will guide you through the authentication process interactively.
 
 ### Basic Authentication
 
