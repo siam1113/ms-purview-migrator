@@ -7,8 +7,8 @@ export class MSLogin {
 
   constructor(page: Page) {
     this.page = page;
-    this.username = process.env.username!;
-    this.password = process.env.password!;
+    this.username = process.env.MS_USERNAME!;
+    this.password = process.env.MS_PASSWORD!;
   }
 
   async goto(): Promise<void> {
@@ -16,21 +16,38 @@ export class MSLogin {
     console.log(`Navigating to Microsoft login page for user: ${this.username}`);
   }
 
+  async isAccountFound(): Promise<boolean> {
+    return await this.page.locator('text=Pick an account').isVisible({ timeout: 5000 });
+  }
+
+  async enterCredentials(): Promise<void> {
+    if (await this.isAccountFound()) {
+      console.log(`Account found for user: ${this.username}`);
+      console.log(`Account found for user: ${this.username}`);
+      // Click on the account if it exists
+      await this.page.click(`text=${this.username}`);
+      console.log(`Clicked on account: ${this.username}`);
+    } else {
+      // Enter username
+      await this.page.fill('input[name="loginfmt"]', this.username);
+      await this.page.click('input[type="submit"]');
+      console.log(`Entered username: ${this.username}`);
+    }
+
+    // Wait for password field
+    await this.page.waitForSelector('input[name="passwd"]', { timeout: 5000 });
+
+    // Enter password
+    await this.page.fill('input[name="passwd"]', this.password);
+    await this.page.click('input[type="submit"]');
+    console.log(`Entered password for user: ${this.username}`);
+  }
+
+
   public authenticate(): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
       try {
-        // Enter username
-        await this.page.fill('input[name="loginfmt"]', this.username);
-        await this.page.click('input[type="submit"]');
-        console.log(`Entered username: ${this.username}`);
-
-        // Wait for password field
-        await this.page.waitForSelector('input[name="passwd"]', { timeout: 5000 });
-
-        // Enter password
-        await this.page.fill('input[name="passwd"]', this.password);
-        await this.page.click('input[type="submit"]');
-        console.log(`Entered password for user: ${this.username}`);
+        await this.enterCredentials();
 
         // Wait for potential 2FA
         try {
@@ -38,7 +55,7 @@ export class MSLogin {
         } catch (error) {
           console.error(`2FA handling failed for user: ${this.username}`, error);
         }
-        
+
         resolve(true);
       } catch (error) {
         console.error(`Login failed for user: ${this.username}`, error);

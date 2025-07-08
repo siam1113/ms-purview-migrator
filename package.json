@@ -12,7 +12,8 @@
   "devDependencies": {},
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "scraper": "npm run build && node ./dist/index.js",
+    "scraper": "npm run build && node ./dist/scraper.js",
+    "migrator": "npm run build && node ./dist/migrator.js",
     "setup": "yarn install && yarn playwright install"
   },
   "author": "",

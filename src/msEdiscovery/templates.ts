@@ -6,7 +6,7 @@ export class MSEDiscoveryTemplateScraper {
 
   constructor(page: Page) {
     this.page = page;
-    this.tenantId = process.env.tenant_id!;
+    this.tenantId = process.env.MS_TENANT_ID!;
   }
 
   async goto(): Promise<void> {
@@ -33,7 +33,7 @@ export class MSEDiscoveryTemplateScraper {
     const communicationLibrary = this.page.locator('#CommunicationLibrary');
     await communicationLibrary.click();
     console.log('Clicked on Communication Library');
-    await this.page.waitForSelector('[data-automationid="DetailsRow"]', { timeout: 10000 });
+    await this.page.waitForSelector('[data-automationid="DetailsRow"]', { timeout: 30000 });
   }
 
   async scrapeTemplates(): Promise<JSON[]> {
@@ -48,10 +48,9 @@ export class MSEDiscoveryTemplateScraper {
       const templateLocator = row.locator('[data-automationid="DetailsRowCell"]');
       const templateName = await templateLocator.first().innerText();
       console.log(`Found template: ${templateName}`);
-
  
       await templateLocator.first().click();
-      const templatePromise = this.page.waitForResponse(urlRegex, { timeout: 15000 });
+      const templatePromise = this.page.waitForResponse(urlRegex, { timeout: 30000 });
       await editButton.click();
       console.log(`Clicked on Edit for template: ${templateName}`);
       console.log(`Waiting for response for template: ${templateName}`);
