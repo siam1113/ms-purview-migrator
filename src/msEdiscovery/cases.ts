@@ -17,14 +17,16 @@ export class MSEDiscoveryCasesScraper {
     const urlRegex = /https:\/\/purview\.microsoft\.com\/apiproxy\/aedmcc\/ediscovery\/v1\/cases/;
     const casesPromise = this.page.waitForResponse(urlRegex, { timeout: 45000 });
     await this.goto();
-    console.log('Waiting to capture the cases list...');
+    console.log('🕛 Waiting to capture the cases list...');
     const response = await casesPromise;
     if (response) {
       const casesData = (await response.json()).value;
-      console.log(`Captured ${casesData.length} cases from Microsoft E-Discovery.`);
+      console.log(`-----------------------------------------------------------------------------------`);
+      console.log(`✅ Captured ${casesData.length} cases from Microsoft E-Discovery.`);
+      console.log(`-----------------------------------------------------------------------------------`);
       return casesData;
     } else {
-      console.error('Failed to scrape cases from Microsoft E-Discovery.');
+      console.error('❌ Failed to scrape cases from Microsoft E-Discovery.');
       return [];
     }
   }

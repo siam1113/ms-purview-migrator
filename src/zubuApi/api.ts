@@ -32,8 +32,8 @@ export async function authenticateUser(request: APIRequestContext, input: { emai
       tenant_id: responseBody.data.authenticateUser.tenant_id,
     }
   } catch (error) {
-    console.error('Error authenticating user:', error);
-    throw new Error('Authentication failed');
+    console.error('🔴 Error authenticating user:', error);
+    throw new Error('❌ Authentication failed');
   }
 }
 
@@ -60,13 +60,13 @@ export async function createTemplate(request: APIRequestContext, accessToken: st
 
     const result = await response.json();
     if (result.errors) {
-      console.error('Error creating template:', result.errors);
-      throw new Error('Template creation failed');
+      console.error('🔴 Error creating template:', result.errors);
+      throw new Error('❌ Template creation failed');
     }
-    console.log(`Template "${input.templateName}" created successfully.`);
+    console.log(`✅ Template "${input.templateName}" created successfully.`);
     return result.data.createTemplate;
   } catch (error) {
-    console.error('Error creating template:', error);
-    throw new Error('Template creation failed');
+    console.error('🔴 Error creating template:', error);
+    throw new Error('❌ Template creation failed');
   }
 }

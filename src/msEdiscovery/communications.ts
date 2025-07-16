@@ -1,5 +1,5 @@
 import { Page } from "playwright";
-
+const fs = require('fs');
 export class MSEDiscoveryCommunicationsScraper {
   private page: Page;
   private tenantId: string;
@@ -22,9 +22,9 @@ export class MSEDiscoveryCommunicationsScraper {
     const logMessage = `${new Date().toISOString()} - ${message}\n${error.stack}\n\n`;
     fs.appendFile(logFilePath, logMessage, (err: Error) => {
       if (err) {
-        console.error('Failed to write to log file:', err);
+        console.error('🔴 Failed to write to log file:', err);
       } else {
-        console.log('Error logged to file:', logFilePath);
+        console.log('🧧 Error logged to file:', logFilePath);
       }
     });
   }
@@ -37,17 +37,42 @@ export class MSEDiscoveryCommunicationsScraper {
       const response = await communicationsPromise;
       if (response) {
         const communicationsData = (await response.json()).value;
-        console.log(`Scraped ${communicationsData.length} communications from Microsoft E-Discovery.`);
         return communicationsData;
       }
       else {
-        console.error('Failed to scrape communications from Microsoft E-Discovery.');
+        console.error('❌ Failed to scrape communications from Microsoft E-Discovery.');
         return [];
       }
     } catch (error) {
-      console.error(`Error scraping communications for case ${eDiscoveryCase.name}:`, error);
-      await this.logError(`Error scraping communications for case ${eDiscoveryCase.name}`, error as Error);
+      console.error(`🔴 Error scraping communications for case ${eDiscoveryCase.name}:`, error);
+      await this.logError(`🔴 Error scraping communications for case ${eDiscoveryCase.name}`, error as Error);
       return [];
+    }
+  }
+
+  async scrapeExportCommunicationsForCases(cases:any[]): Promise<void> {
+    const eDiscoveryCasesCount = cases.length;
+    for (const eDiscoveryCase of cases) {
+      // Progress logging
+      const percetnage = ((cases.indexOf(eDiscoveryCase) + 1) / eDiscoveryCasesCount * 100).toFixed(2);
+      console.log(`------------------------------${percetnage}%----------------------------------------`);
+
+      console.log(`🟡 Scraping communications for case: ${eDiscoveryCase.displayName}`);
+      const communications = await this.scrapeCommunications({
+        id: eDiscoveryCase.id,
+        name: eDiscoveryCase.displayName
+      });
+
+      console.log(`✅ Scraped ${communications.length} communications for case: ${eDiscoveryCase.displayName}`);
+      const communicationsCount = communications.length;
+
+      // Export communications to JSON file
+      if (communicationsCount > 0) {
+        const caseExportPath = `exports/communications_${eDiscoveryCase.id}.json`;
+        fs.writeFileSync(caseExportPath, JSON.stringify(communications, null, 2));
+        console.log(`✅ Communications for case ${eDiscoveryCase.displayName} exported to ${caseExportPath}`);
+      }
+      console.log(`-----------------------------------------------------------------------------------`);
     }
   }
 }

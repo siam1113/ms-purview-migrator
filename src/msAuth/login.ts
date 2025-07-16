@@ -13,11 +13,16 @@ export class MSLogin {
 
   async goto(): Promise<void> {
     await this.page.goto('https://login.microsoftonline.com/');
-    console.log(`Navigating to Microsoft login page for user: ${this.username}`);
+    console.log(`🟡 Navigating to Microsoft login page for user: ${this.username}`);
   }
 
   async isAccountFound(): Promise<boolean> {
     return await this.page.locator('text=Pick an account').isVisible({ timeout: 5000 });
+  }
+
+  async isLoggedIn(): Promise<boolean> {
+    await this.page.waitForLoadState('networkidle'); // Wait for page to load
+    return !await this.page.locator('text=Sign in, text=Pick an account').isVisible();
   }
 
   async enterCredentials(): Promise<void> {
