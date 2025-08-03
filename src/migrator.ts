@@ -1,7 +1,8 @@
 import { chromium } from 'playwright';
 import { config } from 'dotenv';
-import { authenticateUser, createTemplate } from './zubuApi/api';
+import { authenticateUser, createCommunication, createMatter, createTemplate } from './zubuApi/api';
 import path from 'path';
+import { dataMapper } from './utils/utils';
 const fs = require('fs');
 
 // Load environment variables from .env file
@@ -30,33 +31,33 @@ config({
   });
   console.log(`🟢 User authenticated successfully with ID: ${auth.userId} and Tenant ID: ${auth.tenant_id}`);
 
-  // Load templates
-  console.log('🟡 Loading templates from file...');
-  const templates = JSON.parse(fs.readFileSync('exports/templates.json', 'utf-8'));
-  const templatesCount = templates.length;
-  const templatesToExport = templates.slice(0, process.env.EXPORT_TEMPLATES_LIMIT ? parseInt(process.env.EXPORT_TEMPLATES_LIMIT) : templatesCount);
+  // // Load templates
+  // console.log('🟡 Loading templates from file...');
+  // const templates = JSON.parse(fs.readFileSync('exports/templates.json', 'utf-8'));
+  // const templatesCount = templates.length;
+  // const templatesToExport = templates.slice(0, process.env.EXPORT_TEMPLATES_LIMIT ? parseInt(process.env.EXPORT_TEMPLATES_LIMIT) : templatesCount);
 
-  // Create Templates in Zubu
-  console.log(`🟡 Exporting ${templatesToExport.length} templates into Zubu`);
-  const templateTypes = ['issuance', 'reissuance', 'release'];
-  for (const template of templatesToExport) {
-    // Progress logging
-    const index = templates.indexOf(template) + 1;
-    const percentage = ((index / templatesCount) * 100).toFixed(2);
-    console.log(`------------------------------${percentage}%----------------------------------------`);
+  // // Create Templates in Zubu
+  // console.log(`🟡 Exporting ${templatesToExport.length} templates into Zubu`);
+  // const templateTypes = ['issuance', 'reissuance', 'release'];
+  // for (const template of templatesToExport) {
+  //   // Progress logging
+  //   const index = templates.indexOf(template) + 1;
+  //   const percentage = ((index / templatesCount) * 100).toFixed(2);
+  //   console.log(`------------------------------${percentage}%----------------------------------------`);
 
-    console.log(`🟡 Creating template: ${template.templateName}`);
-    for (const type of [templateTypes[0]]) {
-      console.log(`🟡 Creating ${type} template for: ${template.templateName}`);
-      await createTemplate(context.request, auth?.accessToken, {
-        templateName: `${template.templateName} - ${type}`,
-        templateBody: JSON.stringify(template[type].body),
-        tenantId: auth?.tenant_id
-      });
-    }
-    console.log(`-----------------------------------------------------------------------------------`);
-  }
-  console.log('✅ All templates exported successfully in Zubu.');
+  //   console.log(`🟡 Creating template: ${template.templateName}`);
+  //   for (const type of [templateTypes[0]]) {
+  //     console.log(`🟡 Creating ${type} template for: ${template.templateName}`);
+  //     await createTemplate(context.request, auth?.accessToken, {
+  //       templateName: `${template.templateName} - ${type}`,
+  //       templateBody: JSON.stringify(template[type].body),
+  //       tenantId: auth?.tenant_id
+  //     });
+  //   }
+  //   console.log(`-----------------------------------------------------------------------------------`);
+  // }
+  // console.log('✅ All templates exported successfully in Zubu.');
 
   // Load Communications
   console.log('🟡 Loading communications from files...');
@@ -67,36 +68,61 @@ config({
   
   console.log(`🟡 Exporting communication for ${communicationsToExport.length} cases`);
   for (const file of communicationsToExport) {
-    // Progress logging
-    const index = matchedFiles.indexOf(file) + 1;
-    const percentage = ((index / communicationsToExport.length) * 100).toFixed(2);
-    console.log(`------------------------------${percentage}%----------------------------------------`);
-
     const fullPath = path.join(exportsDir, file);
     const communication = JSON.parse(fs.readFileSync(fullPath, 'utf-8'))[0];
-    console.log(`🟡 Creating communication templates for ${communication.CaseName} - ${communication.Name}`);
-    console.log(`🟡 Creating Issuance template`);
-    await createTemplate(context.request, auth?.accessToken, {
-      templateName: `${communication.CaseName} - ${communication.Name} - ${communication.IssuanceSubject}`,
-      templateBody: JSON.stringify(communication.IssuanceContent),
-      tenantId: auth?.tenant_id
+    let parsedCommunication = dataMapper(communication);
+    
+    // Create Matter
+    const matterId = await createMatter(context.request, auth?.accessToken, {
+      name: parsedCommunication.caseName,
+      custodians: parsedCommunication.custodianIds.map((id: string) => ({ _id: id })),
+      tenantId: auth?.tenant_id,
+      openDate: new Date().getTime().toString()
     });
+    console.log(matterId);
+    delete parsedCommunication.caseName;
+    console.log(`🟢 Matter created with ID: ${matterId} for case: ${parsedCommunication.caseName}`);
 
-    console.log(`🟡 Creating Reissuance template`);
-    await createTemplate(context.request, auth?.accessToken, {
-      templateName: `${communication.CaseName} - ${communication.Name} - ${communication.ReissuanceSubject}`,
-      templateBody: JSON.stringify(communication.ReissuanceContent),
-      tenantId: auth?.tenant_id
-    });
+    // Create Communication
+    console.log(`🟡 Creating communication for case: ${parsedCommunication.name}`);
+    const communicationData = {
+      ...parsedCommunication,
+      matterId
+    };
 
-    console.log(`🟡 Creating Release template`);
-    await createTemplate(context.request, auth?.accessToken, {
-      templateName: `${communication.CaseName} - ${communication.Name} - ${communication.ReleaseSubject}`,
-      templateBody: JSON.stringify(communication.ReleaseContent),
-      tenantId: auth?.tenant_id
-    });
-    console.log(`✅ Templates created for communication: ${communication.Name}`);
-    console.log(`-----------------------------------------------------------------------------------`);
+    const communicationResponse = await createCommunication(context.request, auth?.accessToken, communicationData, auth?.tenant_id);
+    console.log(communicationResponse);
+
+    // // Progress logging
+    // const index = matchedFiles.indexOf(file) + 1;
+    // const percentage = ((index / communicationsToExport.length) * 100).toFixed(2);
+    // console.log(`------------------------------${percentage}%----------------------------------------`);
+
+    // const fullPath = path.join(exportsDir, file);
+    // const communication = JSON.parse(fs.readFileSync(fullPath, 'utf-8'))[0];
+    // console.log(`🟡 Creating communication templates for ${communication.CaseName} - ${communication.Name}`);
+    // console.log(`🟡 Creating Issuance template`);
+    // await createTemplate(context.request, auth?.accessToken, {
+    //   templateName: `${communication.CaseName} - ${communication.Name} - ${communication.IssuanceSubject}`,
+    //   templateBody: JSON.stringify(communication.IssuanceContent),
+    //   tenantId: auth?.tenant_id
+    // });
+
+    // console.log(`🟡 Creating Reissuance template`);
+    // await createTemplate(context.request, auth?.accessToken, {
+    //   templateName: `${communication.CaseName} - ${communication.Name} - ${communication.ReissuanceSubject}`,
+    //   templateBody: JSON.stringify(communication.ReissuanceContent),
+    //   tenantId: auth?.tenant_id
+    // });
+
+    // console.log(`🟡 Creating Release template`);
+    // await createTemplate(context.request, auth?.accessToken, {
+    //   templateName: `${communication.CaseName} - ${communication.Name} - ${communication.ReleaseSubject}`,
+    //   templateBody: JSON.stringify(communication.ReleaseContent),
+    //   tenantId: auth?.tenant_id
+    // });
+    // console.log(`✅ Templates created for communication: ${communication.Name}`);
+    // console.log(`-----------------------------------------------------------------------------------`);
   }
   console.log('✅ All communications exported successfully in Zubu.');
 

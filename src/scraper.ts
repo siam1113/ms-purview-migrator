@@ -42,7 +42,7 @@ config({
 
   console.log(`🟡 Checking if user is logged in...`);
   const isLoggedIn = await msLogin.isLoggedIn();
-  if (isLoggedIn) {
+  if (true) {
     console.log('✅ User already logged in. Continuing...');
   }
   else{
@@ -57,20 +57,20 @@ config({
     }
   }
 
-  // Scrape Templates
-  console.log('✅ Starting to scrape templates from Microsoft E-Discovery...');
-  await templateScraper.goto();
-  console.log('🟡 Navigating to Communication Library...');
-  await templateScraper.clickOnCommunicationLibrary();
-  console.log('🟡 Scraping templates from Microsoft E-Discovery...');
-  const templates = await templateScraper.scrapeTemplates();
-  console.log('✅ Completed scraping templates');
-  console.log(`✅  Scraped ${templates.length} templates.`);
+  // // Scrape Templates
+  // console.log('✅ Starting to scrape templates from Microsoft E-Discovery...');
+  // await templateScraper.goto();
+  // console.log('🟡 Navigating to Communication Library...');
+  // await templateScraper.clickOnCommunicationLibrary();
+  // console.log('🟡 Scraping templates from Microsoft E-Discovery...');
+  // const templates = await templateScraper.scrapeTemplates();
+  // console.log('✅ Completed scraping templates');
+  // console.log(`✅  Scraped ${templates.length} templates.`);
 
-  // Export templates to JSON file
-  console.log('🟡 Exporting templates to JSON file...');
-  fs.writeFileSync(exportPath, JSON.stringify(templates, null, 2));
-  console.log(`✅ Templates exported to ${exportPath}`);
+  // // Export templates to JSON file
+  // console.log('🟡 Exporting templates to JSON file...');
+  // fs.writeFileSync(exportPath, JSON.stringify(templates, null, 2));
+  // console.log(`✅ Templates exported to ${exportPath}`);
 
   // Scrape ane Export Communications
   console.log('🟡 Starting to scrape communications from Microsoft E-Discovery...');

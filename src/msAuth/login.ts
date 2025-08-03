@@ -21,7 +21,7 @@ export class MSLogin {
   }
 
   async isLoggedIn(): Promise<boolean> {
-    await this.page.waitForLoadState('networkidle'); // Wait for page to load
+    await this.page.waitForTimeout(20_000); // Wait for page to load
     return !await this.page.locator('text=Sign in, text=Pick an account').isVisible();
   }
 

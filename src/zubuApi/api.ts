@@ -70,3 +70,60 @@ export async function createTemplate(request: APIRequestContext, accessToken: st
     throw new Error('❌ Template creation failed');
   }
 }
+
+export async function createMatter(request: APIRequestContext, accessToken: string, input: { name: string, custodians: string[], tenantId: string, openDate: string }) {
+
+  const response = await request.post('/', {
+    headers: {
+      'authorization': 'Bearer ' + accessToken,
+      'content-type': 'application/json',
+    },
+    data: {
+      query: `
+        mutation CreateMatter($name: String, $custodians: [CustodiansInput], $tenantId: ID, $openDate: Date) {
+          createMatter(name: $name, custodians: $custodians, tenant_id: $tenantId, open_date: $openDate)
+        }
+      `,
+      variables: { name: input.name, custodians: input.custodians, tenantId: input.tenantId, openDate: input.openDate }
+    }
+  });
+  const result = await response.json();
+  if (result.errors) {
+    console.error('🔴 Error creating matter:', result.errors);
+    throw new Error('❌ Matter creation failed');
+  }
+  console.log(`✅ Matter "${input.name}" created successfully.`);
+  return result.data.createMatter;
+}
+
+export async function createCommunication(request: APIRequestContext, accessToken: string, data: any, tenantId: string) {
+  const response = await request.post('/', {
+    headers: {
+      'authorization': 'Bearer ' + accessToken,
+      'content-type': 'application/json',
+    },
+    data: {
+      operationName: "CreateCommunication",
+      variables: {
+        input: data,
+        tenantId
+      },
+      query: `
+        mutation CreateCommunication($input: CommunicationInput!, $tenantId: ID!) {
+          createCommunication(input: $input, tenant_id: $tenantId) {
+            _id,
+            name
+          }
+        }
+      `,
+
+    },
+  });
+  const result = await response.json();
+  if (result.errors) {
+    console.error('🔴 Error creating communication:', result.errors);
+    throw new Error('❌ Communication creation failed');
+  }
+  console.log(`✅ Communication "${data.name}" created successfully.`);
+  return result.data.createCommunication;
+}
